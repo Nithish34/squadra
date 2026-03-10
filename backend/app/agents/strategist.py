@@ -55,7 +55,7 @@ import os
 
 async def _search_manufacturer_price(mission_id: str, query: str) -> str:
     """Uses Serper API (Google Search) to find manufacturer pricing."""
-    serper_api_key = os.environ.get("SERPER_API_KEY")
+    serper_api_key = settings.serper_api_key
     if not serper_api_key:
         await _thought(mission_id, "ℹ️ SERPER_API_KEY not found. Simulating manufacturer price search...")
         return "Simulated MSRP: ₹450"

@@ -4,7 +4,7 @@
  * JWT token is stored in authStore and injected as Bearer header.
  */
 
-const BASE = "http://localhost:8000/api";
+const BASE = "http://127.0.0.1:8000/api";
 
 // ── Token accessor (set by authStore after login) ────────────────────────────
 let _getToken: (() => string | null) = () => null;
