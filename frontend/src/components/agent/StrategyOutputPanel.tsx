@@ -65,58 +65,62 @@ export default function StrategyOutputPanel() {
                                     <span className="text-xs font-semibold px-2.5 py-1 rounded-full border bg-violet-50 border-violet-200 text-violet-700 capitalize">
                                         {strategistResult.recommendation_type.replace('_', ' ')}
                                     </span>
-                                    {strategistResult.gen_ui_card.price_adjustment && (
-                                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full border bg-amber-50 border-amber-200 text-amber-700 flex items-center gap-1">
-                                            <TrendingDown className="w-3 h-3" /> Price Adjustment
-                                        </span>
-                                    )}
                                 </div>
 
-                                {/* Instagram card preview */}
-                                <div className="rounded-xl border border-border bg-gradient-to-br from-violet-50/50 to-pink-50/50 overflow-hidden">
+                                {/* Marketing Strategy */}
+                                <div className="rounded-xl border border-border bg-gradient-to-br from-violet-50/50 to-blue-50/50 overflow-hidden">
                                     <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50">
-                                        <Instagram className="w-4 h-4 text-pink-500" />
-                                        <span className="text-xs font-semibold text-foreground">Instagram Post Preview</span>
+                                        <Brain className="w-4 h-4 text-blue-500" />
+                                        <span className="text-xs font-semibold text-foreground">Marketing Strategy</span>
                                     </div>
-                                    <div className="p-4 space-y-3">
-                                        <h3 className="font-display font-bold text-foreground text-base leading-snug">
-                                            {strategistResult.gen_ui_card.headline}
-                                        </h3>
+                                    <div className="p-4">
                                         <p className="text-sm text-muted-foreground leading-relaxed">
-                                            {strategistResult.gen_ui_card.body_copy}
+                                            {strategistResult.gen_ui_card.marketing_strategy}
                                         </p>
-                                        {/* CTA */}
-                                        <div className="inline-flex items-center gap-1.5 text-xs font-semibold gradient-primary text-white px-3 py-1.5 rounded-lg">
-                                            <Sparkles className="w-3 h-3" />
-                                            {strategistResult.gen_ui_card.cta}
+                                    </div>
+                                </div>
+
+                                {/* Poster Prompts */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="rounded-xl border border-border bg-gradient-to-br from-pink-50/50 to-orange-50/50 overflow-hidden">
+                                        <div className="flex items-center gap-2 px-3 py-2 border-b border-border/50">
+                                            <Instagram className="w-3.5 h-3.5 text-pink-500" />
+                                            <span className="text-xs font-semibold text-foreground">Instagram Prompt</span>
                                         </div>
-                                        {/* Hashtags */}
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {strategistResult.gen_ui_card.hashtags.map((tag) => (
-                                                <span key={tag} className="text-xs text-primary font-medium flex items-center gap-0.5">
-                                                    <Hash className="w-3 h-3" />{tag}
-                                                </span>
-                                            ))}
-                                        </div>
-                                        {/* Image prompt */}
-                                        <div className="flex items-start gap-2 p-3 rounded-lg bg-background/80 border border-border/50">
-                                            <ImageIcon className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                                        <div className="p-3">
                                             <p className="text-xs text-muted-foreground italic">
-                                                {strategistResult.gen_ui_card.suggested_image_prompt}
+                                                {strategistResult.gen_ui_card.instagram_poster_prompt}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="rounded-xl border border-border bg-gradient-to-br from-blue-50/50 to-cyan-50/50 overflow-hidden">
+                                        <div className="flex items-center gap-2 px-3 py-2 border-b border-border/50">
+                                            <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
+                                            <span className="text-xs font-semibold text-foreground">Facebook Prompt</span>
+                                        </div>
+                                        <div className="p-3">
+                                            <p className="text-xs text-muted-foreground italic">
+                                                {strategistResult.gen_ui_card.facebook_poster_prompt}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Price adjustment */}
-                                {strategistResult.gen_ui_card.price_adjustment && (
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {Object.entries(strategistResult.gen_ui_card.price_adjustment).map(([key, val]) => (
-                                            <div key={key} className="rounded-lg bg-muted p-3">
-                                                <p className="text-xs text-muted-foreground capitalize mb-0.5">{key.replace(/_/g, ' ')}</p>
-                                                <p className="text-sm font-bold text-foreground">{String(val)}</p>
-                                            </div>
-                                        ))}
+                                {/* Suggested Offers */}
+                                {strategistResult.gen_ui_card.suggested_offers && strategistResult.gen_ui_card.suggested_offers.length > 0 && (
+                                    <div className="rounded-xl border border-border bg-amber-50/30 overflow-hidden">
+                                        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50">
+                                            <Tag className="w-4 h-4 text-amber-500" />
+                                            <span className="text-xs font-semibold text-foreground">Suggested Offers</span>
+                                        </div>
+                                        <div className="p-4 space-y-2">
+                                            {strategistResult.gen_ui_card.suggested_offers.map((offer, i) => (
+                                                <div key={i} className="flex items-start gap-2">
+                                                    <Sparkles className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                                                    <p className="text-sm text-foreground">{offer}</p>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 
@@ -148,7 +152,7 @@ export default function StrategyOutputPanel() {
                         </p>
                     </div>
                     <div className="p-5 space-y-3">
-                        <p className="text-sm text-muted-foreground leading-relaxed">{analystResult.summary}</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{analystResult.executive_summary}</p>
                         <div className="space-y-2">
                             {analystResult.gaps.map((gap, i) => (
                                 <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border/40">
@@ -170,21 +174,7 @@ export default function StrategyOutputPanel() {
                 </motion.div>
             )}
 
-            {/* Publish log */}
-            {publishLog.length > 0 && (
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-1.5"
-                >
-                    <p className="text-xs font-semibold text-emerald-700 mb-2 flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Published
-                    </p>
-                    {publishLog.map((entry, i) => (
-                        <p key={i} className="text-xs text-emerald-600">{entry}</p>
-                    ))}
-                </motion.div>
-            )}
+
         </div>
     );
 }

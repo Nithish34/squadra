@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from 'framer-motion';
-import { Cpu, Activity, LogOut, Settings, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import { Cpu, Activity, LogOut, Settings, RefreshCw, Wifi, WifiOff, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAgentStore } from '@/store/agentStore';
 import { useAuthStore } from '@/store/authStore';
@@ -105,6 +106,15 @@ export default function DashboardPage() {
                             </Button>
                         )}
 
+                        <Link href="/missions">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Mission History"
+                            >
+                                <History className="w-4 h-4" />
+                            </Button>
+                        </Link>
                         <Button
                             variant="ghost"
                             size="icon"

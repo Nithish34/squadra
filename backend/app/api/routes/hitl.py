@@ -57,6 +57,8 @@ async def get_review_state(
     state = await load_pipeline_state(mission_id)
     if state is None:
         raise HTTPException(status_code=404, detail="Mission not found")
+    if getattr(state, "tenant_id", "") != _user["email"]:
+        raise HTTPException(status_code=403, detail="Not authorized to access this mission")
 
     hitl_gate_status = await get_scout_hitl_status(mission_id)
 
@@ -91,6 +93,8 @@ async def submit_scout_review(
     state = await load_pipeline_state(mission_id)
     if state is None:
         raise HTTPException(status_code=404, detail="Mission not found")
+    if getattr(state, "tenant_id", "") != _user["email"]:
+        raise HTTPException(status_code=403, detail="Not authorized to access this mission")
 
     if state.mode != PipelineMode.SCOUT_HITL:
         raise HTTPException(
@@ -161,6 +165,8 @@ async def hitl_status(
     state = await load_pipeline_state(mission_id)
     if state is None:
         raise HTTPException(status_code=404, detail="Mission not found")
+    if getattr(state, "tenant_id", "") != _user["email"]:
+        raise HTTPException(status_code=403, detail="Not authorized to access this mission")
 
     gate = await get_scout_hitl_status(mission_id)
     return {

@@ -4,7 +4,7 @@ app/core/config.py — Application settings loaded from .env
 from __future__ import annotations
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from pydantic import Field
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -21,14 +21,21 @@ class Settings(BaseSettings):
 
     tomtom_api_key: str = ""
     serper_api_key: str = ""
+    postgres_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/postgres"
 
     meta_access_token: str = ""
     instagram_business_account_id: str = ""
 
-    # JWT
-    secret_key: str = "change-me-in-production-use-a-long-random-string"
+    # JWT — secret_key MUST be stable across restarts (set in .env)
+    # If not set, a random key is generated — but this invalidates all tokens on every reload!
+    secret_key: str = Field(default="change-me-in-production-set-SECRET_KEY-in-env")
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 1440  # 24 hours
+    access_token_expire_minutes: int = 10080  # 7 days
+
+    # Dev seed user — pre-created on startup so the in-memory store survives hot-reloads
+    dev_seed_email: str = ""
+    dev_seed_password: str = ""
+    dev_seed_business: str = "My Business"
 
 
 @lru_cache

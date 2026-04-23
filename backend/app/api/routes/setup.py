@@ -30,6 +30,8 @@ async def create_mission(
     payload: MissionSetup,
     _user: dict = Depends(get_current_user),
 ):
+    # Enforce tenant isolation
+    payload.tenant_id = _user["email"]
     """
     Validates config and launches the pipeline as a background task.
     Returns 202 Accepted immediately.
@@ -83,4 +85,6 @@ async def get_mission_state(
     state = await load_pipeline_state(mission_id)
     if state is None:
         raise HTTPException(status_code=404, detail=f"Mission {mission_id} not found")
+    if getattr(state, "tenant_id", "") != _user["email"]:
+        raise HTTPException(status_code=403, detail="Not authorized to access this mission")
     return state

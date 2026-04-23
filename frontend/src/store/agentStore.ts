@@ -4,7 +4,7 @@
  */
 import { create } from 'zustand';
 import type { PipelineState, ScoutResult, AnalystResult, StrategistResult, StreamEvent } from '@/lib/api';
-import { openMissionStream } from '@/lib/api';
+import { openMissionStream, apiGetMissionState } from '@/lib/api';
 
 export type AgentStatus = 'idle' | 'running' | 'waiting_hitl' | 'completed' | 'error';
 
@@ -98,10 +98,18 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
 
     const es = openMissionStream(missionId);
 
+    const fetchAndApplyState = async () => {
+      try {
+        const fullState = await apiGetMissionState(missionId);
+        get().applyPipelineState(fullState);
+      } catch { /* ignore — stream will continue */ }
+    };
+
     const addLog = (agent: string, message: string) =>
       set((s) => ({
+        // Cap at 200 to prevent unbounded growth (fixes slow 'thought' handler violations)
         logs: [
-          ...s.logs,
+          ...s.logs.slice(-199),
           { id: crypto.randomUUID(), timestamp: Date.now(), message, agent },
         ],
       }));
@@ -160,7 +168,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
       } catch { /* ignore */ }
     });
 
-    // handoff — agent-to-agent relay
+    // handoff — agent-to-agent relay → fetch intermediate results (e.g. scout_result after Scout→Analyst)
     es.addEventListener('handoff', (e: MessageEvent) => {
       try {
         const ev: StreamEvent = JSON.parse(e.data);
@@ -174,6 +182,8 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
             return a;
           }),
         }));
+        // ✅ Fetch the backend state to populate intermediate results (e.g. scout_result)
+        fetchAndApplyState();
       } catch { /* ignore */ }
     });
 
@@ -187,11 +197,12 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
           ),
         }));
         addLog('scout', '⏸ Paused — awaiting human review of findings');
+        fetchAndApplyState(); // Load scout_result for HITL review UI
       } catch { /* ignore */ }
     });
 
     // publish_started / publish_complete
-    es.addEventListener('publish_started', (e: MessageEvent) => {
+    es.addEventListener('publish_started', () => {
       addLog('system', '🚀 Publishing strategy to Shopify + Instagram...');
       set({ pipelineStatus: 'PUBLISHING' });
     });
@@ -203,14 +214,17 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
       } catch { /* ignore */ }
     });
 
-    // complete — stream ended
+    // complete — stream ended → fetch FINAL full state with all results
     es.addEventListener('complete', () => {
-      set({ pipelineStatus: 'COMPLETE', isStreaming: false });
       set((s) => ({
+        pipelineStatus: 'COMPLETE',
+        isStreaming: false,
         agents: s.agents.map((a) =>
           a.status === 'running' ? { ...a, status: 'completed', progress: 100 } : a
         ),
       }));
+      // ✅ This is the critical fetch — populates scoutResult, analystResult, strategistResult
+      fetchAndApplyState();
       es.close();
     });
 
@@ -260,7 +274,9 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
       if (event.event === 'complete') {
         // Fetch the final state via polling
       }
-    } catch { /* ignore */ }
+    } catch (error) {
+      console.error("SSE Parse Error", error, event);
+    }
   },
 
   reset: () => {

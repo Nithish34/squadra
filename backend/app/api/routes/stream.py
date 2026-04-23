@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from typing import Optional
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Query, Request, HTTPException
 from sse_starlette.sse import EventSourceResponse
 
 from app.core.security import decode_token
@@ -39,11 +39,20 @@ async def sse_stream(
         return ESR(denied())
 
     try:
-        decode_token(raw_token)
+        token_data = decode_token(raw_token)
+        user_email = token_data.get("sub")
     except Exception:
         async def invalid():
             yield {"event": "error", "data": json.dumps({"detail": "Invalid token"})}
         return EventSourceResponse(invalid())
+
+    # Enforce tenant isolation for the stream
+    from app.core.state_store import load_pipeline_state
+    state = await load_pipeline_state(mission_id)
+    state_tenant = getattr(state, "tenant_id", "") if state else ""
+    # Only block if tenant_id is set (non-empty, non-default) and doesn't match
+    if state_tenant and state_tenant != "default_workspace" and state_tenant != user_email:
+        raise HTTPException(status_code=403, detail="Not authorized to access this stream")
 
     async def event_gen():
         async for event in stream_events(mission_id, timeout=600.0):

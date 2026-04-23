@@ -25,8 +25,11 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
         "http://192.168.121.82:3000",
         "http://192.168.121.82:3001",
+        "http://192.168.121.82:8080",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -43,6 +46,14 @@ app.include_router(stream.router,    prefix=API_PREFIX)
 app.include_router(hitl.router,      prefix=API_PREFIX)
 app.include_router(graph.router,     prefix=API_PREFIX)
 app.include_router(dashboard.router, prefix=API_PREFIX)
+
+
+# ── Startup ───────────────────────────────────────────────────────────────────
+
+@app.on_event("startup")
+async def on_startup():
+    """Seed the dev user so it survives hot-reloads and server restarts."""
+    auth.seed_dev_user()
 
 
 @app.get("/api/health", tags=["Health"])

@@ -17,6 +17,7 @@ from datetime import datetime
 from typing import AsyncIterator, Optional
 
 import redis.asyncio as aioredis
+import fakeredis.aioredis
 
 from app.core.config import get_settings
 from app.schemas import (
@@ -26,16 +27,34 @@ from app.schemas import (
 
 settings = get_settings()
 _redis: Optional[aioredis.Redis] = None
+_use_fake_redis = False
 
 SENTINEL = "__DONE__"
 
 
 async def get_redis() -> aioredis.Redis:
-    global _redis
+    global _redis, _use_fake_redis
     if _redis is None:
-        _redis = await aioredis.from_url(
-            settings.redis_url, encoding="utf-8", decode_responses=True,
-        )
+        if not _use_fake_redis:
+            try:
+                # Try to connect to real Redis
+                _redis = aioredis.from_url(
+                    settings.redis_url,
+                    encoding="utf-8",
+                    decode_responses=True,
+                    socket_timeout=5.0,
+                    socket_connect_timeout=5.0,
+                )
+                # Test the connection
+                await _redis.ping()
+                print("✅ Connected to Redis successfully")
+            except Exception as e:
+                print(f"⚠️ Redis connection failed: {e}. Using in-memory fallback (FakeRedis).")
+                _use_fake_redis = True
+                _redis = None
+        
+        if _use_fake_redis:
+            _redis = fakeredis.aioredis.FakeRedis(decode_responses=True)
     return _redis
 
 

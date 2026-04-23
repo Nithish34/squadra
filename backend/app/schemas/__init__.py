@@ -15,7 +15,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 # ── Enums ─────────────────────────────────────────────────────────────────────
@@ -48,11 +48,16 @@ class AgentRole(str, Enum):
 
 
 class Niche(str, Enum):
-    ECOMMERCE      = "ecommerce"
-    LOCAL_SERVICES = "local_services"
-    FOOD_BEVERAGE  = "food_beverage"
-    FASHION        = "fashion"
-    ELECTRONICS    = "electronics"
+    ECOMMERCE           = "ecommerce"
+    LOCAL_SERVICES      = "local_services"
+    FOOD_BEVERAGE       = "food_beverage"
+    FASHION             = "fashion"
+    ELECTRONICS         = "electronics"
+    HEALTH_WELLNESS     = "health_wellness"
+    EDUCATION           = "education"
+    BEAUTY_PERSONAL_CARE = "beauty_personal_care"
+    REAL_ESTATE         = "real_estate"
+    FITNESS             = "fitness"
 
 
 # ── SSE Event Types ────────────────────────────────────────────────────────────
@@ -74,7 +79,7 @@ class StreamEventType(str, Enum):
 
 class UserCreate(BaseModel):
     email: str
-    password: str
+    password: str = Field(min_length=6)
     business_name: str
 
 
@@ -95,6 +100,7 @@ class CompetitorTarget(BaseModel):
     name: str
     url: str
     social_handle: Optional[str] = None
+    notes: Optional[str] = None            # optional competitor observation
 
 
 class MissionSetup(BaseModel):
@@ -114,6 +120,35 @@ class MissionSetup(BaseModel):
     # ── The key toggle ──────────────────────────────────────────────────────
     # Default False = fully autonomous. Set True to pause after Scout.
     enable_scout_hitl: bool = False
+
+    # ── Advanced Scout Context (all optional — enriches LLM prompts) ────────
+    business_category: str = ""        # e.g. "Cafe", "Clothing Store"
+    business_type: str = ""            # e.g. "Local Retail", "D2C", "Franchise"
+    address: str = ""                  # street / neighbourhood
+    service_radius_km: int = 5         # radius for TomTom geo search
+    latitude: Optional[float] = None   # from browser GPS auto-detect
+    longitude: Optional[float] = None  # from browser GPS auto-detect
+    product_name: str = ""             # primary product/service name
+    price_range: str = ""              # e.g. "₹120–₹180"
+    usp: str = ""                      # unique selling point
+    target_audience: str = ""          # e.g. "College students"
+    age_group: str = ""                # e.g. "18–25"
+    income_level: str = ""             # e.g. "Low-Mid"
+    business_goal: str = ""            # e.g. "Increase local customer visits"
+    current_price: str = ""            # existing product price
+    website: str = ""                  # business website
+    social_links: list[str] = []       # Instagram, Facebook, etc.
+    delivery_enabled: bool = False
+    delivery_radius_km: int = 0
+    delivery_platforms: list[str] = []     # e.g. ["Swiggy", "Zomato"]
+    monthly_budget: int = 0                # marketing budget in local currency
+    # Stage & positioning
+    business_stage: str = ""              # "New" | "Growing" | "Established" | "Declining"
+    brand_positioning: str = ""           # "Budget" | "Premium" | "Eco-Friendly" etc.
+    avg_price: str = ""                   # average selling price
+    discount_range: str = ""              # e.g. "10%–20%"
+    spending_level: str = ""              # "Low" | "Mid" | "High" audience spending
+    business_challenges: list[str] = []   # free-text problems the user faces
 
 
 class MissionResponse(BaseModel):
@@ -140,9 +175,56 @@ class ScoutFinding(BaseModel):
     included: bool = True
 
 
+class ProductInfo(BaseModel):
+    name: str = ""
+    category: str = ""
+    description: str = ""
+    features: list[str] = []
+    target_audience: str = ""
+    benefits: list[str] = []
+    brand_tone: str = ""
+
+
+class GeoData(BaseModel):
+    location: str = ""
+    coordinates: Optional[str] = None
+    traffic_level: str = ""
+    nearby_landmarks: list[str] = []
+    distance_score: str = ""
+
+
+class CompetitorInfo(BaseModel):
+    name: str = ""
+    url: str = ""
+    products: list[str] = []
+    messaging: str = ""
+    promotions: list[str] = []
+    included: bool = True
+
+
+class PricingData(BaseModel):
+    average_price: float = 0.0
+    price_range: str = ""
+    competitor_prices: dict[str, float] = {}
+
+
+class MarketSentiment(BaseModel):
+    positive_feedback: list[str] = []
+    customer_complaints: list[str] = []
+    trending_problems: list[str] = []
+    feature_requests: list[str] = []
+
+
 class ScoutResult(BaseModel):
     mission_id: str
-    findings: list[ScoutFinding]
+    product_info: ProductInfo = Field(default_factory=ProductInfo)
+    geo_data: GeoData = Field(default_factory=GeoData)
+    competitors: list[CompetitorInfo] = []
+    pricing: PricingData = Field(default_factory=PricingData)
+    market_sentiment: MarketSentiment = Field(default_factory=MarketSentiment)
+    embedding_id: Optional[str] = None
+    source_links: list[str] = []
+    findings: list[ScoutFinding] = []  # Kept for backward UI compatibility during transition
     raw_html_snippets: list[str] = []
     completed_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -173,27 +255,62 @@ class GapItem(BaseModel):
     your_value: str
     opportunity: str
     risk_level: str   # "low" | "medium" | "high"
+    risk_reason: str = ""
+    severity_score: float = 0.0
+    signal_strength: float = 0.0
+    priority_rank: int = 1
+    opportunity_type: str = ""
+    confidence_reason: str = ""
+    source_references: list[str] = Field(default_factory=list)
+    cluster: str = ""
+    trend_direction: str = ""
+    competitor_similarity: float = 0.0
+    geo_advantage: str = ""
+    analysis_path: list[str] = Field(default_factory=list)
 
 
 class AnalystResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     mission_id: str
-    summary: str
+    summary: str = Field(alias="executive_summary")
     gaps: list[GapItem]
     recommended_price_delta_pct: Optional[float] = None
     confidence_score: float = Field(ge=0.0, le=1.0)
+    reason_trace_id: str = ""
     completed_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 # ── Strategist Agent ──────────────────────────────────────────────────────────
 
-class GenUICard(BaseModel):
-    """Structured JSON rendered as Instagram card preview (stratpanel + genui panel)."""
-    headline: str
-    body_copy: str
+class CampaignVariant(BaseModel):
+    variant_name: str
+    platform: str
+    campaign_angle: str
+    offer: str
     cta: str
-    hashtags: list[str]
-    suggested_image_prompt: str
-    price_adjustment: Optional[dict[str, Any]] = None
+    expected_roi: str
+
+
+class GenUICard(BaseModel):
+    """Structured JSON rendered as Strategy Output card preview."""
+    marketing_strategy: str
+    instagram_poster_prompt: str
+    facebook_poster_prompt: str
+    suggested_offers: list[str]
+    campaign_goal: str = ""
+    estimated_roi: str = ""
+    execution_priority: int = 1
+    risk_analysis: str = ""
+    location_strategy: str = ""
+    visual_style: str = ""
+    target_persona: str = ""
+    counter_strategy: str = ""
+    offer_score: float = 0.0
+    recommended_budget: dict = Field(default_factory=dict)
+    cta_options: list[str] = Field(default_factory=list)
+    posting_schedule: dict = Field(default_factory=dict)
+    campaign_variants: list[CampaignVariant] = Field(default_factory=list)
 
 
 class StrategistResult(BaseModel):
@@ -201,6 +318,7 @@ class StrategistResult(BaseModel):
     recommendation_type: str   # "instagram_post" | "price_adjustment" | "both"
     gen_ui_card: GenUICard
     rationale: str
+    reason_trace_id: str = ""
     completed_at: datetime = Field(default_factory=datetime.utcnow)
 
 

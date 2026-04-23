@@ -70,6 +70,8 @@ async def get_agent_graph(
     state = await load_pipeline_state(mission_id)
     if state is None:
         raise HTTPException(status_code=404, detail="Mission not found")
+    if getattr(state, "tenant_id", "") != _user["email"]:
+        raise HTTPException(status_code=403, detail="Not authorized to access this mission")
 
     mode = state.mode
 

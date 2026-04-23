@@ -20,9 +20,9 @@ from datetime import datetime
 import structlog
 from langgraph.graph import StateGraph, END
 
-from app.agents.scout      import run_scout
-from app.agents.analyst    import run_analyst
-from app.agents.strategist import run_strategist
+from app.agents.scout_agent.main import run_scout
+from app.agents.analyst_agent.main import run_analyst
+from app.agents.strategist_agent.main import run_strategist
 from app.core.state_store  import (
     save_pipeline_state, update_pipeline_status,
     push_event, push_sentinel,
@@ -77,6 +77,7 @@ async def launch_pipeline(setup: MissionSetup) -> str:
 
     initial_state = PipelineState(
         mission_id=mission_id,
+        tenant_id=setup.tenant_id,   # ← lock to user's email for tenant isolation
         mode=mode,
         status=PipelineStatus.IDLE,
     )
@@ -95,6 +96,7 @@ async def _run_graph(mission_id: str, setup: MissionSetup, mode: PipelineMode) -
     try:
         seed = {
             "mission_id":           mission_id,
+            "tenant_id":            setup.tenant_id,   # ← required for 403 tenant check
             "mode":                 mode,
             "status":               PipelineStatus.SCOUT_RUNNING,
             "scout_result":         None,
@@ -113,6 +115,33 @@ async def _run_graph(mission_id: str, setup: MissionSetup, mode: PipelineMode) -
             "_keywords":            setup.keywords,
             "_shopify_product_ids": setup.shopify_product_ids,
             "_instagram_post":      setup.instagram_post,
+            # Advanced Scout context
+            "_business_category":   setup.business_category,
+            "_business_type":       setup.business_type,
+            "_address":             setup.address,
+            "_service_radius_km":   setup.service_radius_km,
+            "_latitude":            setup.latitude,
+            "_longitude":           setup.longitude,
+            "_product_name":        setup.product_name,
+            "_price_range":         setup.price_range,
+            "_usp":                 setup.usp,
+            "_target_audience":     setup.target_audience,
+            "_age_group":           setup.age_group,
+            "_income_level":        setup.income_level,
+            "_business_goal":       setup.business_goal,
+            "_current_price":       setup.current_price,
+            "_website":             setup.website,
+            "_social_links":        setup.social_links,
+            "_delivery_enabled":    setup.delivery_enabled,
+            "_delivery_radius_km":  setup.delivery_radius_km,
+            "_delivery_platforms":  setup.delivery_platforms,
+            "_monthly_budget":      setup.monthly_budget,
+            "_business_stage":      setup.business_stage,
+            "_brand_positioning":   setup.brand_positioning,
+            "_avg_price":           setup.avg_price,
+            "_discount_range":      setup.discount_range,
+            "_spending_level":      setup.spending_level,
+            "_business_challenges": setup.business_challenges,
         }
         await _GRAPH.ainvoke(seed)
 

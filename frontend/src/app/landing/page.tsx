@@ -78,7 +78,7 @@ export default function LandingPage() {
         setMounted(true);
     }, []);
 
-    const targetRoute = isAuthenticated
+    const targetRoute = mounted && isAuthenticated
         ? (hasCompletedOnboarding ? "/dashboard" : "/onboarding")
         : "/auth?tab=signup";
 
@@ -100,6 +100,7 @@ export default function LandingPage() {
                         {mounted && isAuthenticated ? (
                             <Link
                                 href={hasCompletedOnboarding ? "/dashboard" : "/onboarding"}
+                                suppressHydrationWarning
                                 className="text-sm font-semibold bg-gradient-to-r from-[hsl(340,65%,65%)] to-[hsl(340,70%,72%)] text-white px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity"
                             >
                                 Go to Dashboard
@@ -108,12 +109,14 @@ export default function LandingPage() {
                             <>
                                 <Link
                                     href="/auth"
+                                    suppressHydrationWarning
                                     className="text-sm text-[hsl(340,25%,40%)] hover:text-[hsl(340,65%,65%)] transition-colors px-3 py-1.5"
                                 >
                                     Sign in
                                 </Link>
                                 <Link
                                     href="/auth?tab=signup"
+                                    suppressHydrationWarning
                                     className="text-sm font-semibold bg-gradient-to-r from-[hsl(340,65%,65%)] to-[hsl(340,70%,72%)] text-white px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity"
                                 >
                                     Get Started
@@ -178,6 +181,7 @@ export default function LandingPage() {
                     >
                         <Link
                             href={targetRoute}
+                            suppressHydrationWarning
                             className="group inline-flex items-center gap-2 bg-gradient-to-r from-[hsl(340,65%,62%)] to-[hsl(340,70%,68%)] text-white font-semibold px-7 py-3.5 rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-base"
                         >
                             {mounted && isAuthenticated ? "Go to Dashboard" : "Get Started Free"}
@@ -185,6 +189,7 @@ export default function LandingPage() {
                         </Link>
                         <a
                             href="#how-it-works"
+                            suppressHydrationWarning
                             className="inline-flex items-center gap-2 text-[hsl(340,25%,35%)] font-medium px-6 py-3.5 rounded-xl border border-[hsl(340,25%,88%)] hover:bg-[hsl(340,30%,96%)] transition-colors text-base"
                         >
                             See how it works
@@ -375,6 +380,7 @@ export default function LandingPage() {
                         </p>
                         <Link
                             href={targetRoute}
+                            suppressHydrationWarning
                             className="inline-flex items-center gap-2 bg-white text-[hsl(340,55%,50%)] font-bold px-8 py-4 rounded-xl hover:scale-[1.03] active:scale-[0.97] transition-transform shadow-xl text-base"
                         >
                             {mounted && isAuthenticated ? "Go to Dashboard" : "Start for Free"} <ArrowRight className="w-4 h-4" />
